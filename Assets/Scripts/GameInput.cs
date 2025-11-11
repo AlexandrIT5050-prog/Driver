@@ -8,7 +8,8 @@ public class GameInput : MonoBehaviour
 
     private PlayerInputActions playerInputActions;
 
-    public event EventHandler OnPlayerRunning;
+    public event EventHandler OnPlayerRunningStarted;
+    public event EventHandler OnPlayerRunningCanceled;
 
     private void Awake()
     {
@@ -16,21 +17,33 @@ public class GameInput : MonoBehaviour
         playerInputActions = new PlayerInputActions();
         playerInputActions.Enable();
 
-        playerInputActions.Player.Running.performed += PlayerRunning;
+        playerInputActions.Player.Running.performed += PlayerRunningStarted;
+        playerInputActions.Player.Running.canceled += PlayerRunningCanceled;
     }
+
+    private void PlayerRunningStarted(InputAction.CallbackContext context)
+    {
+        OnPlayerRunningStarted?.Invoke(this, EventArgs.Empty);
+    }
+    private void PlayerRunningCanceled(InputAction.CallbackContext context)
+    {
+        OnPlayerRunningCanceled?.Invoke(this, EventArgs.Empty);
+    }
+
 
     public Vector3 GetMovementVector()
     {
-        Vector3 inputVector = playerInputActions.Player.Move.ReadValue<Vector3>();
-        return inputVector;
+       return playerInputActions.Player.Move.ReadValue<Vector3>();
+        
     }
-
-    public void PlayerRunning(InputAction.CallbackContext obj)
+    public Vector2 GetLookVector()
     {
-        OnPlayerRunning?.Invoke(this, EventArgs.Empty);
+        return playerInputActions.Player.Look.ReadValue<Vector2>();
     }
 
-    
+
+
+
 
 
 }

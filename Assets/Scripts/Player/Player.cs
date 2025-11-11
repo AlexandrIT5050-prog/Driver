@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
@@ -14,6 +15,7 @@ public class Player : MonoBehaviour
     private bool isWalking;
     private bool isRunning;
 
+
     private Vector3 inputVector;
     private Rigidbody rb;
 
@@ -21,25 +23,20 @@ public class Player : MonoBehaviour
     {
         Instance = this;
         rb = GetComponent<Rigidbody>();
-
-       
     }
 
     private void Start()
     {
-        GameInput.Instance.OnPlayerRunning += GameInput_OnPlayerRunning;
+        if (GameInput.Instance != null)
+        {
+            GameInput.Instance.OnPlayerRunningStarted += GameInput_OnPlayerRunningStarted;
+            GameInput.Instance.OnPlayerRunningCanceled += GameInput_OnPlayerRunningCanceled;
+        }
     }
-
-    private void GameInput_OnPlayerRunning(object sender, EventArgs e)
-    {
-        Animation.Instance.Running();
-       
-    }
-
     private void Update()
     {
         inputVector = GameInput.Instance.GetMovementVector();
-        
+   
     }
 
     private void FixedUpdate()
@@ -49,18 +46,24 @@ public class Player : MonoBehaviour
 
     private void HandleMovement()
     {
-        rb.MovePosition(rb.position + inputVector * (movingSpeed * Time.deltaTime));
-        if (Mathf.Abs(inputVector.x) > minMovingSpeed || Mathf.Abs(inputVector.y) > minMovingSpeed || Mathf.Abs(inputVector.z)>minMovingSpeed)
-        {
-            isWalking = true;
-        }
-        else
-        {
-            isWalking = false;
-        }
+        float currentSpeed = isRunning? runningSpeed:movingSpeed;
+        rb.MovePosition(rb.position + inputVector * (currentSpeed * Time.fixedDeltaTime));
+        bool isMoving = inputVector.sqrMagnitude > minMovingSpeed * minMovingSpeed;
+
+        isWalking = isMoving;
+        isWalking = isMoving && !isRunning;
+        isRunning = isMoving && isRunning;
     }
 
-    
+    private void GameInput_OnPlayerRunningStarted(object sender, EventArgs e)
+    {
+        isRunning = true;
+    }
+
+    private void GameInput_OnPlayerRunningCanceled(object sender, EventArgs e)
+    {
+        isRunning = false;
+    }
 
     public bool IsWalking()
     {
